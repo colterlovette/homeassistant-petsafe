@@ -29,7 +29,6 @@ class PetSafeSwitchEntity(CoordinatorEntity, SwitchEntity):
         self._attr_has_entity_name = True
         self._coordinator = coordinator
         self._api_name = api_name
-        self._attr_should_poll = True
         self._attr_unique_id = api_name + "_" + device_type
         self._attr_icon = icon
         self._device_type = device_type
@@ -69,15 +68,6 @@ class PetSafeLitterboxSwitchEntity(PetSafeSwitchEntity):
             sw_version=device.firmware,
         )
 
-    def _handle_coordinator_update(self) -> None:
-        data: PetSafeData = self.coordinator.data
-        litterbox: petsafe.devices.DeviceScoopfree = next(
-            x for x in data.litterboxes if x.api_name == self._api_name
-        )
-
-        self.async_write_ha_state()
-        return super()._handle_coordinator_update()
-
 
 class PetSafeFeederSwitchEntity(PetSafeSwitchEntity):
     def __init__(
@@ -114,23 +104,30 @@ class PetSafeFeederSwitchEntity(PetSafeSwitchEntity):
         )
         self._device = device
 
+    async def async_added_to_hass(self) -> None:
+        """Seed the initial value; the listener alone does not set state."""
+        await super().async_added_to_hass()
+        self._update_attrs()
+
     def _handle_coordinator_update(self) -> None:
+        self._update_attrs()
+        return super()._handle_coordinator_update()
+
+    def _update_attrs(self) -> None:
         data: PetSafeData = self.coordinator.data
-        feeder: petsafe.devices.DeviceSmartFeed = next(
-            x for x in data.feeders if x.api_name == self._api_name
+        if data is None:
+            return
+        feeder: petsafe.devices.DeviceSmartFeed | None = next(
+            (x for x in data.feeders if x.api_name == self._api_name), None
         )
+        if feeder is None:
+            return
         if self._device_type == "child_lock":
             self._attr_is_on = feeder.is_locked
         elif self._device_type == "feeding_paused":
             self._attr_is_on = feeder.is_paused
         elif self._device_type == "slow_feed":
             self._attr_is_on = feeder.is_slow_feed
-
-        self.schedule_update_ha_state(True)
-        return super()._handle_coordinator_update()
-
-    async def async_update(self) -> None:
-        return await super().async_update()
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         if self._device_type == "child_lock":

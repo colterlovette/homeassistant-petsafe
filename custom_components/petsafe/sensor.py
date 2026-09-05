@@ -1,4 +1,3 @@
-from datetime import timedelta
 from homeassistant.config_entries import ConfigEntry
 
 from homeassistant.core import HomeAssistant
@@ -7,8 +6,6 @@ from homeassistant.helpers.entity import EntityCategory
 
 from . import PetSafeCoordinator, SensorEntities
 from .const import DOMAIN
-
-SCAN_INTERVAL = timedelta(seconds=60)
 
 
 async def async_setup_entry(hass: HomeAssistant, config: ConfigEntry, add_entities):

@@ -25,3 +25,15 @@ RAKE_NOW = "RAKE_NOW"
 RAKE_COUNTER_RESET = "RAKE_COUNTER_RESET"
 
 FEED_DONE = "FEED_DONE"
+
+# How often the coordinator refreshes the "extra" per-device data that needs a
+# dedicated API call (feeding schedules, message history, litterbox activity).
+# This data changes at most a couple of times a day, so there is nothing to be
+# gained by fetching it on every coordinator tick.
+DETAILS_UPDATE_INTERVAL = 300
+
+# How many days of message history to request when looking for the last feeding.
+MESSAGE_LOOKBACK_DAYS = 7
+
+# Format PetSafe uses for scheduled feeding times (local wall-clock, 24 hour).
+SCHEDULE_TIME_FORMAT = "%H:%M"

@@ -30,7 +30,6 @@ class PetSafeSelectEntity(CoordinatorEntity, SelectEntity):
         self._attr_has_entity_name = True
         self._coordinator = coordinator
         self._api_name = api_name
-        self._attr_should_poll = True
         self._attr_unique_id = api_name + "_" + device_type
         self._attr_icon = icon
         self._device_type = device_type
@@ -74,17 +73,29 @@ class PetSafeLitterboxSelectEntity(PetSafeSelectEntity):
         )
         self._attr_current_option = None
 
+    async def async_added_to_hass(self) -> None:
+        """Seed the initial value; the listener alone does not set state."""
+        await super().async_added_to_hass()
+        self._update_attrs()
+
     def _handle_coordinator_update(self) -> None:
-        data: PetSafeData = self.coordinator.data
-        litterbox: petsafe.devices.DeviceScoopfree = next(
-            x for x in data.litterboxes if x.api_name == self._api_name
-        )
-        if self._device_type == "rake_timer":
-            self._attr_current_option = str(
-                litterbox.data["shadow"]["state"]["reported"]["rakeDelayTime"]
-            )
-        self.async_write_ha_state()
+        self._update_attrs()
         return super()._handle_coordinator_update()
+
+    def _update_attrs(self) -> None:
+        data: PetSafeData = self.coordinator.data
+        if data is None:
+            return
+        litterbox: petsafe.devices.DeviceScoopfree | None = next(
+            (x for x in data.litterboxes if x.api_name == self._api_name), None
+        )
+        if litterbox is None:
+            return
+        if self._device_type == "rake_timer":
+            shadow = litterbox.data.get("shadow") or {}
+            reported = (shadow.get("state") or {}).get("reported") or {}
+            delay = reported.get("rakeDelayTime")
+            self._attr_current_option = None if delay is None else str(delay)
 
     async def async_select_option(self, option: str) -> None:
         if self._device_type == "rake_timer":

@@ -26,7 +26,6 @@ class PetSafeButtonEntity(CoordinatorEntity, ButtonEntity):
         self._attr_has_entity_name = True
         self._coordinator = coordinator
         self._api_name = api_name
-        self._attr_should_poll = True
         self._attr_unique_id = api_name + "_" + device_type
         self._attr_icon = icon
         self._device_type = device_type
