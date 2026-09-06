@@ -3,17 +3,17 @@
   "domain": "petsafe",
   "name": "PetSafe",
   "config_flow": true,
-  "documentation": "https://github.com/dcmeglio/homeassistant-petsafe/blob/master/README",
+  "documentation": "https://github.com/colterlovette/homeassistant-petsafe/blob/master/README.md",
   "requirements": [
     "petsafe==2.0.7"
   ],
-  "issue_tracker": "https://github.com/dcmeglio/homeassistant-petsafe/issues",
+  "issue_tracker": "https://github.com/colterlovette/homeassistant-petsafe/issues",
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
   "dependencies": [],
   "codeowners": [
-    "@dcmeglio"
+    "@colterlovette"
   ],
   "iot_class": "cloud_polling"
 }
