@@ -87,14 +87,19 @@ instead — absent is not empty.
 
 ### Meal and Snack buttons, with adjustable portions
 
-Each feeder gains two buttons alongside the stock **Feed**, so the portion is
-chosen by which button you press rather than by a service call:
+Each feeder has exactly two feed buttons, so the portion is chosen by which
+button you press rather than by a service call:
 
 | Entity | Dispenses |
 |---|---|
 | `button.<feeder>_meal` | the feeder's **Meal portion** |
 | `button.<feeder>_snack` | the feeder's **Snack portion** |
-| `button.<feeder>_feed` | 1/8 cup (unchanged stock behaviour) |
+
+Upstream's stock `button.<feeder>_feed` was **removed in 1.7.0**. It dispensed a
+fixed 1/8 cup, which is the default Snack portion, so it was a third button
+doing what Snack already does. Anything referencing `button.<feeder>_feed` must
+move to one of the two above — including a `petsafe.feed` call that used it
+merely to identify the feeder.
 
 Portions are per feeder, set in cups under the device's Configuration section:
 

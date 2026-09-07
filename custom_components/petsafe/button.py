@@ -22,15 +22,6 @@ async def async_setup_entry(hass: HomeAssistant, config: ConfigEntry, add_entiti
         entities.append(
             ButtonEntities.PetSafeFeederButtonEntity(
                 hass=hass,
-                name="Feed",
-                device_type="feed",
-                device=feeder,
-                coordinator=coordinator,
-            )
-        )
-        entities.append(
-            ButtonEntities.PetSafeFeederButtonEntity(
-                hass=hass,
                 name="Meal",
                 device_type=PORTION_MEAL,
                 device=feeder,

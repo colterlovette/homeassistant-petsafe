@@ -12,7 +12,6 @@ from .const import (
     DOMAIN,
     FEEDER_MODEL_GEN1,
     MANUFACTURER,
-    MIN_FEED_EIGHTHS,
     PORTION_MEAL,
     PORTION_SNACK,
 )
@@ -114,10 +113,7 @@ class PetSafeFeederButtonEntity(PetSafeButtonEntity):
         )
 
     async def async_press(self) -> None:
-        if self._device_type == "feed":
-            # The stock button: one 1/8-cup serving, the feeder's default.
-            await self._device.feed(MIN_FEED_EIGHTHS, None, False)
-        elif self._device_type in (PORTION_MEAL, PORTION_SNACK):
+        if self._device_type in (PORTION_MEAL, PORTION_SNACK):
             default = (
                 DEFAULT_MEAL_CUPS
                 if self._device_type == PORTION_MEAL
