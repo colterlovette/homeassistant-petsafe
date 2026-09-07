@@ -3,7 +3,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from . import ButtonEntities, PetSafeCoordinator
-from .const import DOMAIN
+from .const import DOMAIN, PORTION_MEAL, PORTION_SNACK
 
 
 async def async_setup_entry(hass: HomeAssistant, config: ConfigEntry, add_entities):
@@ -26,6 +26,26 @@ async def async_setup_entry(hass: HomeAssistant, config: ConfigEntry, add_entiti
                 device_type="feed",
                 device=feeder,
                 coordinator=coordinator,
+            )
+        )
+        entities.append(
+            ButtonEntities.PetSafeFeederButtonEntity(
+                hass=hass,
+                name="Meal",
+                device_type=PORTION_MEAL,
+                device=feeder,
+                coordinator=coordinator,
+                icon="mdi:bowl-mix",
+            )
+        )
+        entities.append(
+            ButtonEntities.PetSafeFeederButtonEntity(
+                hass=hass,
+                name="Snack",
+                device_type=PORTION_SNACK,
+                device=feeder,
+                coordinator=coordinator,
+                icon="mdi:bone",
             )
         )
     for litterbox in litterboxes:

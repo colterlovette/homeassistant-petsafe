@@ -103,5 +103,22 @@ check("cells fitted, full -> 100", F._battery_level(Feeder(batteries=True, volta
 check("cells fitted, flat -> 0", F._battery_level(Feeder(batteries=True, voltage=22755)), 0)
 check("missing key treated as not installed", F._battery_level(type("X",(),{"data":{}})()), None)
 
+print("\n--- PORTIONS: cups -> the API's 1/8-cup `amount` ---")
+H = importlib.import_module("petsafe_integration.helpers")
+c2e = H.cups_to_eighths
+check("1/8 cup -> 1 (a Snack)",      c2e(0.125), 1)
+check("1/4 cup -> 2 (Chewi evening)", c2e(0.25), 2)
+check("1/2 cup -> 4",                c2e(0.5), 4)
+check("1 cup -> 8 (a Meal)",         c2e(1.0), 8)
+check("4 cups -> 32 (the max)",      c2e(4.0), 32)
+check("above max clamps to 32",      c2e(9.0), 32)
+check("zero clamps up to 1",         c2e(0), 1)
+check("negative clamps up to 1",     c2e(-3), 1)
+check("None -> 1, never 0",          c2e(None), 1)
+check("garbage -> 1, never 0",       c2e("x"), 1)
+check("off-boundary rounds down",    c2e(0.13), 1)
+check("off-boundary rounds up",      c2e(0.19), 2)
+check("string number still works",   c2e("1.0"), 8)
+
 print(f"\n{'='*52}\n  {ok} passed, {fail} failed\n{'='*52}")
 raise SystemExit(1 if fail else 0)

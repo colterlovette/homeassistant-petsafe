@@ -48,6 +48,7 @@ PLATFORMS: list[Platform] = [
     Platform.SWITCH,
     Platform.BUTTON,
     Platform.SELECT,
+    Platform.NUMBER,
 ]
 
 
@@ -271,6 +272,13 @@ class PetSafeCoordinator(DataUpdateCoordinator):
         self._litterbox_activity: dict[str, dict] = {}
         self._details_fetched_at: dict[str, float] = {}
 
+        # Portion sizes in cups, per feeder, for the Meal/Snack buttons:
+        # {api_name: {"meal": 1.0, "snack": 0.125}}. The number entities own
+        # these values and push them here; the buttons read them. Going through
+        # the coordinator rather than looking up a number entity's state keeps
+        # the buttons working if those entities are ever renamed.
+        self._portions: dict[str, dict[str, float]] = {}
+
     async def get_feeders(self) -> list[petsafe.devices.DeviceSmartFeed]:
         """Return the list of feeders."""
         async with self._device_lock:
@@ -296,6 +304,14 @@ class PetSafeCoordinator(DataUpdateCoordinator):
                 else:
                     raise
             return self._litterboxes
+
+    def get_portion(self, api_name: str, kind: str, default: float) -> float:
+        """Return a feeder's configured portion in cups."""
+        return self._portions.get(api_name, {}).get(kind, default)
+
+    def set_portion(self, api_name: str, kind: str, cups: float) -> None:
+        """Record a feeder's portion in cups. Called by the number entities."""
+        self._portions.setdefault(api_name, {})[kind] = cups
 
     def invalidate_details(self, api_name: str | None = None) -> None:
         """Force the next cycle to re-fetch cached detail data.

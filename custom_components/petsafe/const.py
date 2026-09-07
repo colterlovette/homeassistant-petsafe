@@ -37,3 +37,19 @@ MESSAGE_LOOKBACK_DAYS = 7
 
 # Format PetSafe uses for scheduled feeding times (local wall-clock, 24 hour).
 SCHEDULE_TIME_FORMAT = "%H:%M"
+
+# Portion buttons. The feeder dispenses in 1/8-cup increments, so a cup value
+# is only meaningful on a 0.125 boundary -- that is the step, min and hardware
+# granularity all at once.
+PORTION_MEAL = "meal"
+PORTION_SNACK = "snack"
+
+CUP_STEP = 0.125
+MIN_FEED_EIGHTHS = 1
+MAX_FEED_EIGHTHS = 32
+
+# Starting portions. Deliberately adjustable per feeder rather than fixed:
+# a household can have a big dog on a full cup and a small one on an eighth,
+# and a hardcoded "meal" would be wrong (and potentially harmful) on the latter.
+DEFAULT_MEAL_CUPS = 1.0
+DEFAULT_SNACK_CUPS = 0.125

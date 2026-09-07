@@ -3,7 +3,28 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry, entity_registry
 from homeassistant.helpers.device_registry import DeviceEntry, DeviceRegistry
 
-from .const import DOMAIN, FEEDER_MODEL_GEN1, FEEDER_MODEL_GEN2
+from .const import (
+    CUP_STEP,
+    DOMAIN,
+    FEEDER_MODEL_GEN1,
+    FEEDER_MODEL_GEN2,
+    MAX_FEED_EIGHTHS,
+    MIN_FEED_EIGHTHS,
+)
+
+
+def cups_to_eighths(cups) -> int:
+    """Convert a portion in cups to the 1/8-cup units petsafe.feed expects.
+
+    The API takes `amount` in eighths of a cup (1 == 1/8 cup, 8 == 1 cup,
+    32 == 4 cups, its maximum). Anything off a 0.125 boundary is rounded to the
+    nearest eighth, because that is the finest amount the hardware can dispense.
+    """
+    try:
+        eighths = int(round(float(cups) / CUP_STEP))
+    except (TypeError, ValueError):
+        eighths = MIN_FEED_EIGHTHS
+    return max(MIN_FEED_EIGHTHS, min(MAX_FEED_EIGHTHS, eighths))
 
 
 def get_feeders_for_service(hass: HomeAssistant, area_ids, device_ids, entity_ids):

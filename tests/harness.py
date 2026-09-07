@@ -49,3 +49,13 @@ import os
 _HERE = os.path.dirname(os.path.abspath(__file__))
 pkg = mod("petsafe_integration", PetSafeCoordinator=object, PetSafeData=object)
 pkg.__path__ = [os.path.join(_HERE, os.pardir, "custom_components", "petsafe")]
+
+# --- extra stubs so helpers.py imports (registry + config_entries) ----------
+mod("homeassistant.config_entries", ConfigEntryState=type("ConfigEntryState", (), {"LOADED": "loaded"}))
+_dr = mod("homeassistant.helpers.device_registry", async_get=lambda h: None,
+          async_entries_for_area=lambda *a: [], DeviceEntry=object, DeviceRegistry=object)
+_er = mod("homeassistant.helpers.entity_registry", async_get=lambda h: None,
+          async_entries_for_area=lambda *a: [], EntityRegistry=object)
+sys.modules["homeassistant.helpers"].device_registry = _dr
+sys.modules["homeassistant.helpers"].entity_registry = _er
+sys.modules["homeassistant.helpers.entity"].EntityCategory = type("EntityCategory", (), {"CONFIG": "config"})

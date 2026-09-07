@@ -83,6 +83,40 @@ instead — absent is not empty.
   re-auth before *every single request*. The workaround is fully guarded and
   no-ops against a library that fixes the typo.
 
+## Additions
+
+### Meal and Snack buttons, with adjustable portions
+
+Each feeder gains two buttons alongside the stock **Feed**, so the portion is
+chosen by which button you press rather than by a service call:
+
+| Entity | Dispenses |
+|---|---|
+| `button.<feeder>_meal` | the feeder's **Meal portion** |
+| `button.<feeder>_snack` | the feeder's **Snack portion** |
+| `button.<feeder>_feed` | 1/8 cup (unchanged stock behaviour) |
+
+Portions are per feeder, set in cups under the device's Configuration section:
+
+| Entity | Default |
+|---|---|
+| `number.<feeder>_meal_portion` | 1 cup |
+| `number.<feeder>_snack_portion` | 1/8 cup |
+
+They are **deliberately adjustable rather than fixed**. A household can have a
+big dog on a full cup and a small one on an eighth, so a hardcoded "meal" would
+be wrong — and potentially harmful — on the smaller animal. Range is 1/8 to 4
+cups in 1/8-cup steps, matching what the hardware can actually dispense; the
+value is restored across restarts.
+
+Because these are real entities on the device, they appear automatically in the
+device page's Controls card and in auto-generated dashboards under the feeder's
+area — no dashboard editing and no helper scripts.
+
+Pressing any feeder or litterbox button now also invalidates the cached message
+history, so `last_feeding` / `last_cleaning` reflect the action on the next
+coordinator cycle instead of up to the detail TTL later.
+
 ## Known upstream library bugs
 
 These live in the `petsafe` PyPI package, not in this integration, and are still

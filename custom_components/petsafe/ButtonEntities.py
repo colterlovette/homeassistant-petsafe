@@ -6,7 +6,17 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import petsafe
 
 from . import PetSafeCoordinator
-from .const import DOMAIN, FEEDER_MODEL_GEN1, MANUFACTURER
+from .const import (
+    DEFAULT_MEAL_CUPS,
+    DEFAULT_SNACK_CUPS,
+    DOMAIN,
+    FEEDER_MODEL_GEN1,
+    MANUFACTURER,
+    MIN_FEED_EIGHTHS,
+    PORTION_MEAL,
+    PORTION_SNACK,
+)
+from .helpers import cups_to_eighths
 
 
 class PetSafeButtonEntity(CoordinatorEntity, ButtonEntity):
@@ -67,6 +77,7 @@ class PetSafeLitterboxButtonEntity(PetSafeButtonEntity):
             await self._device.reset(0, False)
         elif self._device_type == "clean":
             await self._device.rake(False)
+        self.coordinator.invalidate_details(self._api_name)
         await self.coordinator.async_request_refresh()
 
 
@@ -104,5 +115,20 @@ class PetSafeFeederButtonEntity(PetSafeButtonEntity):
 
     async def async_press(self) -> None:
         if self._device_type == "feed":
-            await self._device.feed(1, None, False)
+            # The stock button: one 1/8-cup serving, the feeder's default.
+            await self._device.feed(MIN_FEED_EIGHTHS, None, False)
+        elif self._device_type in (PORTION_MEAL, PORTION_SNACK):
+            default = (
+                DEFAULT_MEAL_CUPS
+                if self._device_type == PORTION_MEAL
+                else DEFAULT_SNACK_CUPS
+            )
+            cups = self.coordinator.get_portion(
+                self._api_name, self._device_type, default
+            )
+            await self._device.feed(cups_to_eighths(cups), None, False)
+
+        # Drop the cached message history so last_feeding reflects this feed on
+        # the next cycle rather than up to DETAILS_UPDATE_INTERVAL later.
+        self.coordinator.invalidate_details(self._api_name)
         await self.coordinator.async_request_refresh()
