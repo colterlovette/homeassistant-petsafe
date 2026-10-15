@@ -64,7 +64,21 @@ whatever order the API returns.
 
 These feeders run on mains with optional D-cell backup. `0` is indistinguishable
 from a flat battery and pins low-battery automations on. Reports `unknown`
-instead — absent is not empty.
+instead — absent is not empty. That covers both `is_batteries_installed` being
+false and the flag being set with a missing, non-numeric or ~0 V
+`battery_voltage` (below 100 raw, the same cut-off the Homebridge plugin uses).
+A real but flat pack still reads several volts and still shows 0%.
+
+The battery sensor carries `batteries_installed`, `adapter_installed` and
+`battery_voltage_raw` attributes straight from the API, so an odd reading can be
+explained without enabling debug logging.
+
+### Deprecated device registry access (HA 2026.10)
+
+`DeviceEntry.config_entries` logs a deprecation warning from 2026.10 and stops
+working in 2027.10, now that a device belongs to a single config entry. The
+service helpers read `DeviceEntry.config_entry_id` (HA 2026.8+) and only fall
+back to `config_entries` on older releases.
 
 ### Other reliability fixes
 
