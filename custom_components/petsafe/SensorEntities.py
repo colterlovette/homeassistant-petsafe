@@ -17,6 +17,9 @@ import petsafe
 
 from . import PetSafeCoordinator, PetSafeData
 from .const import (
+    BATTERY_VOLTAGE_MAX,
+    BATTERY_VOLTAGE_MIN,
+    BATTERY_VOLTAGE_NO_READING,
     CAT_IN_BOX,
     DOMAIN,
     ERROR_SENSOR_BLOCKED,
@@ -281,18 +284,59 @@ class PetSafeFeederSensorEntity(PetSafeSensorEntity):
                 feeder, data.feeder_schedules.get(self._api_name)
             )
 
-    @staticmethod
-    def _battery_level(feeder: petsafe.devices.DeviceSmartFeed) -> int | None:
-        """Battery percentage, or None when no backup cells are fitted.
-
-        These feeders run on mains with optional D-cell backup. The library's
-        battery_level returns 0 when is_batteries_installed is false, which is
-        indistinguishable from a flat battery and trips low-battery automations
-        forever. Report unknown instead -- absent is not the same as empty.
-        """
-        if not feeder.data.get("is_batteries_installed"):
+    @property
+    def extra_state_attributes(self) -> dict | None:
+        """Expose the raw battery fields, so a 0% or unknown can be explained."""
+        if self._device_type != "battery":
             return None
-        return feeder.battery_level
+        data: PetSafeData = self.coordinator.data
+        feeder = next(
+            (x for x in (data.feeders if data else []) if x.api_name == self._api_name),
+            None,
+        )
+        if feeder is None:
+            return None
+        return {
+            "batteries_installed": self._flag(feeder.data.get("is_batteries_installed")),
+            "adapter_installed": self._flag(feeder.data.get("is_adapter_installed")),
+            "battery_voltage_raw": feeder.data.get("battery_voltage"),
+        }
+
+    @staticmethod
+    def _flag(value) -> bool | None:
+        """Read an API boolean that may arrive as a bool, number or string."""
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return value.strip().lower() in ("true", "1", "yes")
+        return bool(value)
+
+    @classmethod
+    def _battery_level(cls, feeder: petsafe.devices.DeviceSmartFeed) -> int | None:
+        """Battery percentage, or None when there is no battery to measure.
+
+        These feeders run on mains with optional D-cell backup. petsafe's
+        battery_level returns 0 both when is_batteries_installed is false and
+        when the voltage reading is empty or ~0 V with the flag set, which is
+        indistinguishable from a flat battery and trips low-battery automations
+        forever. Report unknown instead -- absent is not the same as empty. A
+        genuinely flat pack still reads well above the no-reading floor and
+        still shows 0%.
+        """
+        if not cls._flag(feeder.data.get("is_batteries_installed")):
+            return None
+        try:
+            voltage = int(float(feeder.data.get("battery_voltage")))
+        except (TypeError, ValueError):
+            return None
+        if voltage < BATTERY_VOLTAGE_NO_READING:
+            return None
+        percent = (
+            100
+            * (voltage - BATTERY_VOLTAGE_MIN)
+            / (BATTERY_VOLTAGE_MAX - BATTERY_VOLTAGE_MIN)
+        )
+        return round(min(max(percent, 0), 100))
 
     @staticmethod
     def _last_feeding(messages) -> datetime.datetime | None:

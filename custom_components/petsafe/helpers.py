@@ -110,11 +110,26 @@ def get_feeders_by_entity_id(
     return matched_devices
 
 
+def device_config_entry_ids(device: DeviceEntry) -> set[str]:
+    """The config entry IDs a device belongs to.
+
+    HA 2026.8 gave each device a single owning entry, DeviceEntry.config_entry_id.
+    From 2026.10 reading the old DeviceEntry.config_entries set logs a
+    deprecation warning, and it stops working in 2027.10. Only fall back to it
+    on releases that predate config_entry_id.
+    """
+    if hasattr(device, "config_entry_id"):
+        if device.config_entry_id is None:
+            return set()
+        return {device.config_entry_id}
+    return set(device.config_entries)
+
+
 def is_device_feeder(hass: HomeAssistant, device: DeviceEntry):
     if device.model not in [FEEDER_MODEL_GEN1, FEEDER_MODEL_GEN2]:
         return False
 
-    config_entry_ids = device.config_entries
+    config_entry_ids = device_config_entry_ids(device)
     entry = next(
         (
             entry

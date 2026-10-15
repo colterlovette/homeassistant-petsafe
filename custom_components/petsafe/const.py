@@ -26,6 +26,15 @@ RAKE_COUNTER_RESET = "RAKE_COUNTER_RESET"
 
 FEED_DONE = "FEED_DONE"
 
+# Raw battery_voltage readings, in the API's ADC units (32767 == 7.2 V). The
+# range is the one petsafe's battery_level uses. A reading below the floor
+# (~0.02 V) is not a battery at all -- four flat D cells still sit at several
+# volts -- so it means "no reading" rather than 0%. Same cut-off as the
+# Homebridge PetSafe plugin.
+BATTERY_VOLTAGE_MIN = 22755
+BATTERY_VOLTAGE_MAX = 29100
+BATTERY_VOLTAGE_NO_READING = 100
+
 # How often the coordinator refreshes the "extra" per-device data that needs a
 # dedicated API call (feeding schedules, message history, litterbox activity).
 # This data changes at most a couple of times a day, so there is nothing to be

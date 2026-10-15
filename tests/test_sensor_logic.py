@@ -102,9 +102,33 @@ check("no backup cells -> None (unknown)", F._battery_level(Feeder(batteries=Fal
 check("cells fitted, full -> 100", F._battery_level(Feeder(batteries=True, voltage=29100)), 100)
 check("cells fitted, flat -> 0", F._battery_level(Feeder(batteries=True, voltage=22755)), 0)
 check("missing key treated as not installed", F._battery_level(type("X",(),{"data":{}})()), None)
+check("flag set, voltage 0 -> None, not 0%", F._battery_level(Feeder(batteries=True, voltage=0)), None)
+check("flag set, voltage '0' string -> None", F._battery_level(Feeder(batteries=True, voltage="0")), None)
+check("flag set, voltage just under floor -> None", F._battery_level(Feeder(batteries=True, voltage=99)), None)
+check("flag set, voltage missing -> None", F._battery_level(Feeder(batteries=True, voltage=None)), None)
+check("flag set, voltage garbage -> None", F._battery_level(Feeder(batteries=True, voltage="n/a")), None)
+check("voltage as API string -> parsed", F._battery_level(Feeder(batteries=True, voltage="25927")), 50)
+check("dead cells (4.5 V) still 0%, not None", F._battery_level(Feeder(batteries=True, voltage=20479)), 0)
+check("over-range voltage clamps to 100", F._battery_level(Feeder(batteries=True, voltage=30000)), 100)
+check("flag 'false' string -> None", F._battery_level(Feeder(batteries="false", voltage=29100)), None)
+check("flag 'true' string -> reads", F._battery_level(Feeder(batteries="true", voltage=29100)), 100)
+
+print("\n--- DEPRECATION: DeviceEntry.config_entries -> config_entry_id ---")
+H = importlib.import_module("petsafe_integration.helpers")
+class NewDevice:                       # HA >= 2026.8
+    config_entry_id = "abc"
+    @property
+    def config_entries(self):
+        raise AssertionError("deprecated config_entries was read")
+class NewOrphan(NewDevice):
+    config_entry_id = None
+class OldDevice:                       # HA < 2026.8
+    config_entries = {"abc", "def"}
+check("new HA uses config_entry_id only", H.device_config_entry_ids(NewDevice()), {"abc"})
+check("new HA, no owning entry -> empty", H.device_config_entry_ids(NewOrphan()), set())
+check("old HA falls back to config_entries", H.device_config_entry_ids(OldDevice()), {"abc", "def"})
 
 print("\n--- PORTIONS: cups -> the API's 1/8-cup `amount` ---")
-H = importlib.import_module("petsafe_integration.helpers")
 c2e = H.cups_to_eighths
 check("1/8 cup -> 1 (a Snack)",      c2e(0.125), 1)
 check("1/4 cup -> 2 (Chewi evening)", c2e(0.25), 2)
